@@ -1,0 +1,3 @@
+/* 驅動tailwind生效的咒語,要寫他才能生效 */
+/*在 assets/main.css */
+@import "tailwindcss";

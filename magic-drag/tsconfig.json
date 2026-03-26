@@ -1,6 +1,7 @@
 {
   "extends": "./.wxt/tsconfig.json",
   "compilerOptions": {
+    "moduleResolution": "Bundler",
     "allowImportingTsExtensions": true,
     "jsx": "react-jsx"
   }
