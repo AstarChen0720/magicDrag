@@ -5,10 +5,17 @@
 // "@/"意思是專案根目錄:告訴主任,從專案的大門口 (根目錄) 出發，進入 assets 找 main.css
 import "@/assets/main.css";
 import { createRoot } from "react-dom/client";
+import { useState } from "react";
 
 export default defineContentScript({
   matches: ["<all_urls>"],
   cssInjectionMode: "ui", // 2. 告訴主任：CSS 要注入到我的 UI 裡，不要弄亂網頁
+
+  const[isVsible, setIsVisible] = useState(false);
+  const[Postion, setPosition] = useState({ top: 0, left: 0 });
+  const[selectedText, setSelectedText] = useState("");
+  const[activeIndex, setActiveIndex] = useState(0);
+
 
   async main(ctx) {
     // 3. 建立一個隔離的施工區 (Shadow DOM)
