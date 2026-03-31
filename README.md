@@ -15,3 +15,7 @@
 照著gemini的指示新增了選單需要的四個狀態,遇到兩問題
 wxt的contentScript的語法?
 ts用了一萬年了但還是不會用
+
+260331
+先把ts複習了一遍,是看這影片的,作為複習非常好用
+https://www.bilibili.com/video/BV1gX4y177Kf?spm_id_from=333.788.videopod.sections&vd_source=262d90e8bd293dbcdd49540ae0db521c
