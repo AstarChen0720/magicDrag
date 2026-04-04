@@ -29,3 +29,5 @@ https://www.bilibili.com/video/BV1gX4y177Kf?spm_id_from=333.788.videopod.section
      1. wxt是高效率硬核工具,這次已經用了就算了,有問題問ai,以後可以換CRXJS(推薦)或Plasmo 或 Extension.js(文檔齊全新手友善)
 
 目前就是先繼續用,如果真的太卡那就直接寫react的語法就好不要用他提供的方法
+
+目前已經用好三個基本功能1快速查詢2複製3翻譯(目前是用快速查尋做的,因為要自己用popup,先不做)

@@ -4,50 +4,176 @@
 
 // "@/"意思是專案根目錄:告訴主任,從專案的大門口 (根目錄) 出發，進入 assets 找 main.css
 import "@/assets/main.css";
+import { useState ,useEffect} from "react";
 import { createRoot } from "react-dom/client";
-import { useState } from "react";
+
+// 定義選單選項的型別
+interface MenuItem {
+  id: string;
+  label: string;
+  color: string;
+}
+
+const RADIUS = 80; // 按鈕離圓心的距離 (像素)
+const DEAD_ZONE = 30;   // 盲區：滑鼠離圓心太近時不觸發任何按鈕
+const SENSITIVITY = 120; // 感應範圍：滑鼠離圓心太遠也會失效
+
+// --- 常數定義 ---
+const MENU_ITEMS = [
+  { id: "search", label: "快速查詢", color: "bg-orange-500", activeColor: "bg-orange-600" },
+  { id: "copy", label: "複製文字", color: "bg-green-500", activeColor: "bg-green-700" },
+  { id: "translate", label: "翻譯", color: "bg-purple-500", activeColor: "bg-purple-700" },
+];
+
+
 
 // 1️⃣ 建立一個 React 元件 
 const MagicDragApp = () => {
-  // 2️⃣ 這裡才是放 useState 的正確位置，並且這樣加上型別：
-  const [isVisible, setIsVisible] = useState<boolean>(false);
-  const [position, setPosition] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
-  const [selectedText, setSelectedText] = useState<string>("");
-  const [activeIndex, setActiveIndex] = useState<number>(0);
+  const [isVisible, setIsVisible] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const [selectedText, setSelectedText] = useState("");
+  // 3️⃣ 新增：記錄當前被選中的按鈕索引 (-1 代表沒選中)
+  const [activeIndex, setActiveIndex] = useState<number>(-1);
+
+  useEffect(() => {
+    // 核心邏輯：計算滑鼠位置與圓心的關係
+    const handleDrag = (e: DragEvent) => {
+      if (!isVisible) return;
+
+      // 1. 計算滑鼠相對於圓心的偏移量
+      const dx = e.clientX - position.left;
+      const dy = e.clientY - position.top;
+
+      // 2. 勾股定理算距離： d = sqrt(dx² + dy²)
+      const distance = Math.sqrt(dx * dx + dy * dy);
+
+      // 3. 判斷是否在「感應區」內
+      if (distance > DEAD_ZONE && distance < SENSITIVITY) {
+        // 4. 使用 atan2 算角度，並轉成 0~360 度
+        // atan2 回傳的是弧度，我們轉成角度後，修正 -90 度的偏移
+        let angle = Math.atan2(dy, dx) * (180 / Math.PI);
+        angle = (angle + 90 + 360) % 360; // 讓 0 度落在正上方
+
+        // 5. 根據角度判斷屬於哪一個「披薩切片」
+        const sectionAngle = 360 / MENU_ITEMS.length;
+        const index =
+          Math.floor((angle + sectionAngle / 2) / sectionAngle) %
+          MENU_ITEMS.length;
+
+        setActiveIndex(index);
+      } else {
+        setActiveIndex(-1); // 在盲區或太遠，不選取
+      }
+    };
+
+    const handleDragStart = (e: DragEvent) => {
+      const selection = window.getSelection()?.toString().trim();
+      if (selection) {
+        setSelectedText(selection);
+        setIsVisible(true);
+        setPosition({ top: e.clientY, left: e.clientX });
+      }
+    };
+
+    const handleDragEnd = () => {
+      // 這裡就是觸發動作的地方！
+      if (activeIndex !== -1) {
+        const action = MENU_ITEMS[activeIndex];
+
+        // 💡 執行動作：
+        // 查尋
+        if (action.id === "search") {
+          browser.runtime.sendMessage({
+            type: "QUICK_SEARCH",
+            payload: selectedText,
+          });
+        } else if (action.id === "copy") {
+          // 複製文字
+          navigator.clipboard.writeText(selectedText);
+          console.log("📋 文字已複製到剪貼簿");
+        } else if (action.id === "translate") {
+          // 翻譯
+          browser.runtime.sendMessage({
+            type: "QUICK_SEARCH", // 暫時先用查詢，之後可以改 translate URL
+            payload: `${selectedText} 中文翻譯`,
+          });
+        }
+      }
+      setIsVisible(false);
+      setActiveIndex(-1);
+    };
+
+    // 監聽 drag 事件來持續追蹤滑鼠位置
+    document.addEventListener("drag", handleDrag);
+    document.addEventListener("dragstart", handleDragStart);
+    document.addEventListener("dragend", handleDragEnd);
+    document.addEventListener("mousedown", () => setIsVisible(false));
+
+    return () => {
+      document.removeEventListener("drag", handleDrag);
+      document.removeEventListener("dragstart", handleDragStart);
+      document.removeEventListener("dragend", handleDragEnd);
+    };
+  }, [isVisible, position, activeIndex, selectedText]);
+
+  if (!isVisible) return null;
 
   return (
-    <div className="fixed top-10 right-10 z-[9999]">
-      <div className="bg-blue-600 text-white p-4 rounded-full shadow-lg hover:bg-blue-700 transition-all cursor-pointer border-4 border-white">
-        👷 Tailwind v4 測試成功！
+    <div
+      className="fixed z-[9999] pointer-events-none"
+      style={{ top: position.top, left: position.left }}
+    >
+      {/* 圓心 */}
+      <div
+        className={`absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-white border-2 ${activeIndex !== -1 ? "border-orange-500 scale-110" : "border-blue-500"} rounded-full flex items-center justify-center shadow-lg z-10 transition-all`}
+      >
+        <span className="text-[10px] font-bold text-gray-700 text-center px-1">
+          {activeIndex !== -1 ? "放開執行" : "請選擇"}
+        </span>
       </div>
+
+      {/* 衛星按鈕 */}
+      {MENU_ITEMS.map((item, index) => {
+        const angle =
+          (index * (360 / MENU_ITEMS.length) - 90) * (Math.PI / 180);
+        const x = RADIUS * Math.cos(angle);
+        const y = RADIUS * Math.sin(angle);
+        const isActive = activeIndex === index;
+
+        return (
+          <div
+            key={item.id}
+            className={`absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16 ${isActive ? item.activeColor + " scale-125 shadow-orange-200" : item.color} text-white rounded-full flex items-center justify-center shadow-md border-2 border-white text-[10px] font-bold transition-all duration-200`}
+            style={{ left: `${x}px`, top: `${y}px` }}
+          >
+            {item.label}
+          </div>
+        );
+      })}
     </div>
   );
 };
 
-
+// --- 3. WXT 主任的計畫書 ---
 export default defineContentScript({
-  matches: ["<all_urls>"], // 1. 告訴主任：這個內容腳本要在所有網頁上運行
-  cssInjectionMode: "ui", // 2. 告訴主任：CSS 要注入到我的 UI 裡，不要弄亂網頁
-  //為何要加上ctx?因為ctx是自動叫回員工的收工裝置,一定要傳入他,這樣你裡面如果寫ctx.XXX的東西時他才會正確運作,下面createShadowRootUi同理,第一個參數一定要是ctx,這是wxt的規定
+  matches: ["<all_urls>"],
+  cssInjectionMode: "ui",
   async main(ctx) {
-    // 3. 建立一個隔離的施工區 (Shadow DOM)
     const ui = await createShadowRootUi(ctx, {
-      name: "magic-drag-ui", // 這個名字會變成 Shadow DOM 的 id，方便我們在開發工具裡找到它
-      anchor: "body", //錨點：把 UI 掛在 body 上
-      position: "inline", //顯示方式：內嵌在網頁裡，跟網頁內容一樣上下滾動,或是浮在網頁上面，固定在某個位置(用'overlay')
-      append: "last", //把 UI 加在錨點的最後面，還有 "first"、"replace"、"before"、"after" 等選項
+      name: "magic-drag-ui",
+      anchor: "body",
+      position: "inline",
+      append: "last",
       onMount: (container) => {
-        // 當 UI 被掛載到網頁上時，主任會呼叫這個函式，並傳入一個 container 元素，
-        // 這個 container 就是我們的施工區，我們可以在裡面建造我們的 UI。
-
-        const root = createRoot(container); //告訴react:這個叫container的元素是我們的根,這部分就交給你來管理了
-        root.render(
-          //告訴react:在這個根裡面，幫我渲染下面這段 JSX，也就是我們的 UI,他是方便的react語法糖，實際上會被轉換成 createElement 的形式
-          <MagicDragApp />,
-        );
+        const root = createRoot(container);
+        root.render(<MagicDragApp />);
+        return root;
+      },
+      onRemove: (root) => {
+        root?.unmount();
       },
     });
 
-    ui.mount(); //執行把 UI 掛載到網頁上的動作，這樣我們的 UI 就會出現了
+    ui.mount();
   },
 });

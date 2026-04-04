@@ -3,5 +3,20 @@
 
 
 export default defineBackground(() => {
-  console.log('Hello background!', { id: browser.runtime.id });
+  // 監聽來自現場（Content Script）的消息
+  browser.runtime.onMessage.addListener((message) => {
+    if (message.type === "QUICK_SEARCH") {
+      const text = message.payload;
+      // 經理拿出權限：開新分頁進行 Google 查詢
+      const url = `https://www.google.com/search?q=${encodeURIComponent(text)}`;
+
+      browser.tabs.create({ url });
+      console.log("✅ 經理已處理查詢：", text);
+    }
+
+    if (message.type === "COPY_TEXT") {
+      // 這裡可以處理更複雜的複製邏輯，或是紀錄 log
+      console.log("✅ 收到複製請求：", message.payload);
+    }
+  });
 });
