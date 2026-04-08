@@ -8,28 +8,38 @@ import { useState ,useEffect} from "react";
 import { createRoot } from "react-dom/client";
 
 // 定義選單選項的型別
-interface MenuItem {
+interface MenuItems {
   id: string;
   label: string;
   color: string;
+  activeColor: string;
 }
 
-const RADIUS = 80; // 按鈕離圓心的距離 (像素)
-const DEAD_ZONE = 30;   // 盲區：滑鼠離圓心太近時不觸發任何按鈕
-const SENSITIVITY = 120; // 感應範圍：滑鼠離圓心太遠也會失效
+// 定義UI接收的參數的型別
+interface PieMenuProps {
+  isVisible: boolean;
+  position: { top: number; left: number };
+  activeIndex: number;
+  menuItems: MenuItems[];
+}
 
-// --- 定義功能選單 ---
-const MENU_ITEMS = [
+//選單控制參數
+const MENU_CONFIG = {
+  radius: 80, // 按鈕離圓心的距離 (像素)
+  deadZone: 30,   // 盲區：滑鼠離圓心太近時不觸發任何按鈕
+  sensitivity: 120, // 感應範圍：滑鼠離圓心太遠也會失效
+};
+
+// --- 定義功能選單物件 ---
+const MENU_ITEMS: MenuItems[] = [
   { id: "search", label: "快速查詢", color: "bg-orange-500", activeColor: "bg-orange-600" },
   { id: "copy", label: "複製文字", color: "bg-green-500", activeColor: "bg-green-700" },
   { id: "translate", label: "翻譯", color: "bg-purple-500", activeColor: "bg-purple-700" },
 ];
 
-
-
-// 1️⃣ 建立一個 React 元件 
-const MagicDragApp = () => {
-  //拿盒子紀錄狀態
+// --- Custom Hook：處理所有拖曳邏輯 ---
+const useDragMenu = () => {
+  //會用到的狀態
   //可見性
   const [isVisible, setIsVisible] = useState(false);
   // 圓心位置
@@ -38,10 +48,11 @@ const MagicDragApp = () => {
   const [selectedText, setSelectedText] = useState("");
   // 哪個按鈕被選取了 (-1 代表沒選)
   const [activeIndex, setActiveIndex] = useState<number>(-1);
+  // #endregion
 
-
+  //主邏輯：監聽拖曳事件，計算選單狀態
   useEffect(() => {
-    // 核心邏輯：計算滑鼠位置與圓心的關係
+    // 計算滑鼠位置與圓心的關係,來判斷選單顯示和選取狀態
     const handleDrag = (e: DragEvent) => {
       if (!isVisible) return;
 
@@ -53,7 +64,10 @@ const MagicDragApp = () => {
       const distance = Math.sqrt(dx * dx + dy * dy);
 
       // 3. 判斷是否在「感應區」內
-      if (distance > DEAD_ZONE && distance < SENSITIVITY) {
+      if (
+        distance > MENU_CONFIG.deadZone &&
+        distance < MENU_CONFIG.sensitivity
+      ) {
         // 4. 使用 atan2 算角度，並轉成 0~360 度
         // atan2:傳入平面座標(y,x),回傳角度,但是是弳度,所以我們要乘以 (180 / Math.PI) 轉成角度後，修正 -90 度的偏移
         let angle = Math.atan2(dy, dx) * (180 / Math.PI);
@@ -85,7 +99,7 @@ const MagicDragApp = () => {
       }
     };
 
-    // 這裡就是觸發動作的選單
+    // 根據位置觸發的動作的選項內容
     const handleDragEnd = () => {
       //如果有觸發按鈕
       if (activeIndex !== -1) {
@@ -114,12 +128,13 @@ const MagicDragApp = () => {
       setActiveIndex(-1);
     };
 
-    // 監聽 drag 事件來持續追蹤滑鼠位置
+    // 安裝事件監視器,來追蹤拖曳行為
     document.addEventListener("drag", handleDrag);
     document.addEventListener("dragstart", handleDragStart);
     document.addEventListener("dragend", handleDragEnd);
     document.addEventListener("mousedown", () => setIsVisible(false));
 
+    // 清理事件監聽器，避免記憶體洩漏
     return () => {
       document.removeEventListener("drag", handleDrag);
       document.removeEventListener("dragstart", handleDragStart);
@@ -127,8 +142,14 @@ const MagicDragApp = () => {
     };
   }, [isVisible, position, activeIndex, selectedText]);
 
-  if (!isVisible) return null;
+  return { isVisible, position, activeIndex };
+};
 
+// --- UI 元件：只負責顯示選單 ---
+//從傳入的props中解構出需要的參數,並且指定它的型別
+const PieMenu = ({ isVisible, position, activeIndex, menuItems }: PieMenuProps) => {
+  //選單UI
+  if (!isVisible) return null;
   return (
     <div
       className="fixed z-[9999] pointer-events-none"
@@ -136,29 +157,33 @@ const MagicDragApp = () => {
     >
       {/* 圓心 */}
       <div
-      //碰到 active 就換顏色並放大
-        className={`absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-white border-2 ${activeIndex !== -1 ? "border-orange-500 scale-110" : "border-blue-500"} rounded-full flex items-center justify-center shadow-lg z-10 transition-all`}
+        //碰到 active 就換顏色並放大
+        className={`absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16 bg-white border-2 ${
+          activeIndex !== -1 ? "border-orange-500 scale-110" : "border-blue-500"
+        } rounded-full flex items-center justify-center shadow-lg z-10 transition-all`}
       >
         <span className="text-[10px] font-bold text-gray-700 text-center px-1">
-        {/* 有無選到顯示不同字 */}
+          {/* 有無選到顯示不同字 */}
           {activeIndex !== -1 ? "放開執行" : "請選擇"}
         </span>
       </div>
 
       {/* 衛星按鈕 */}
-      {MENU_ITEMS.map((item, index) => {
-        const angle =
-          (index * (360 / MENU_ITEMS.length) - 90) * (Math.PI / 180);
-        const x = RADIUS * Math.cos(angle);
-        const y = RADIUS * Math.sin(angle);
+      {menuItems.map((item, index) => {
+        const angle = (index * (360 / menuItems.length) - 90) * (Math.PI / 180);
+        const x = MENU_CONFIG.radius * Math.cos(angle);
+        const y = MENU_CONFIG.radius * Math.sin(angle);
         //如果有選到就換顏色並放大
         const isActive = activeIndex === index;
 
+        //要顯示的選單按鈕
         return (
           <div
             key={item.id}
             //碰到 active 就換顏色並放大
-            className={`absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16 ${isActive ? item.activeColor + " scale-125 shadow-orange-200" : item.color} text-white rounded-full flex items-center justify-center shadow-md border-2 border-white text-[10px] font-bold transition-all duration-200`}
+            className={`absolute -translate-x-1/2 -translate-y-1/2 w-16 h-16 ${
+              isActive ? item.activeColor + " scale-125 shadow-orange-200" : item.color
+            } text-white rounded-full flex items-center justify-center shadow-md border-2 border-white text-[10px] font-bold transition-all duration-200`}
             style={{ left: `${x}px`, top: `${y}px` }}
           >
             {item.label}
@@ -166,6 +191,22 @@ const MagicDragApp = () => {
         );
       })}
     </div>
+  );
+};
+
+// --- 主程式：串接 Hook 與 UI ---
+const MagicDragApp = () => {
+  //執行自訂 Hook，取得選單要有的狀態
+  const { isVisible, position, activeIndex } = useDragMenu();
+
+  //把狀態傳給 UI 元件，讓它根據狀態顯示選單(右邊的參數是傳給 UI 的 props)
+  return (
+    <PieMenu
+      isVisible={isVisible}
+      position={position}
+      activeIndex={activeIndex}
+      menuItems={MENU_ITEMS}
+    />
   );
 };
 

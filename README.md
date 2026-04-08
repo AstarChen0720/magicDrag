@@ -50,3 +50,6 @@ https://www.bilibili.com/video/BV1gX4y177Kf?spm_id_from=333.788.videopod.section
 
 **我該如何快速看懂並加上適合的註解?
 下次要再看再查**
+
+
+260408簡單整理一遍程式碼,並標上註解
