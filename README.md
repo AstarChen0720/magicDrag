@@ -55,3 +55,5 @@ https://www.bilibili.com/video/BV1gX4y177Kf?spm_id_from=333.788.videopod.section
 260408簡單整理一遍程式碼,並標上註解
 
 260410把選單改成扇形了,但是目前還看不太懂
+
+260411把svg選單原理大概搞懂,叫copilot幫我重構
