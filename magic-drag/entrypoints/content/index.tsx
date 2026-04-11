@@ -175,7 +175,7 @@ const PieMenu = ({
   const radiusOut = MENU_CONFIG.sensitivity; // 外圈直接對齊感應範圍
   const radiusIn = MENU_CONFIG.deadZone; // 內圈切齊盲區中心
   const size = radiusOut * 2; // SVG 的寬高需要是外圈半徑的兩倍,才裝得進去整個圓
-  const center = radiusOut;
+  const center = radiusOut;//圓心座標,或是到原心的偏移量,因為svg的寬高是兩倍radiusOut,所以圓心剛好在半徑的位置
 
   // 輔助函式：給定角度（度數）與半徑，算出在 SVG 上的 X, Y 座標
   //你告訴它「右上方 45 度，距離圓心 5 公分」，它就會回傳「(X=120, Y=80)」讓svg知道要在哪落筆。
@@ -191,7 +191,7 @@ const PieMenu = ({
 
   // 輔助函式：得到畫扇形需要的 SVG Path 參數
   //要畫出一個扇形，我們需要知道它的起始角度和結束角度，然後計算出外圈和內圈的起點和終點座標，最後組合成 SVG Path 的指令。
-  const getSectorPath = (startAngle: number, endAngle: number) => {
+  const getSectorPathCode = (startAngle: number, endAngle: number) => {
     const startOut = getCoordinatesForAngle(startAngle, radiusOut);
     const endOut = getCoordinatesForAngle(endAngle, radiusOut);
     const startIn = getCoordinatesForAngle(startAngle, radiusIn);
@@ -242,10 +242,12 @@ const PieMenu = ({
           );
 
           return (
+            //g是沒有意義的盒子
             <g key={item.id} className="transition-all duration-200">
               {/* 扇形本體 */}
               <path
-                d={getSectorPath(startAngle, endAngle)}
+                //複雜的SVG Path指令，來畫出扇形
+                d={getSectorPathCode(startAngle, endAngle)}
                 // 這裡模擬你的附圖 (灰色系環形菜單)
                 // 當滑鼠碰到時，變成深灰色；平時為淺灰
                 fill={isActive ? "#6b7280" : "#9ca3af"}
