@@ -35,4 +35,10 @@ export const MENU_ITEMS: MenuItems[] = [
     color: "bg-purple-500",
     activeColor: "bg-purple-700",
   },
+  {
+    id: "peek",
+    label: "Peek",
+    color: "bg-blue-500",
+    activeColor: "bg-blue-700",
+  },
 ];

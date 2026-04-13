@@ -14,6 +14,11 @@ export const useDragMenu = () => {
   const [selectedText, setSelectedText] = useState("");
   // 哪個按鈕被選取了 (-1 代表沒選)
   const [activeIndex, setActiveIndex] = useState<number>(-1);
+
+  // Peek 小視窗狀態
+  const [isPeekVisible, setIsPeekVisible] = useState(false);
+  const [peekPosition, setPeekPosition] = useState({ top: 0, left: 0 });
+  const [peekQuery, setPeekQuery] = useState("");
   // #endregion
 
   //主邏輯：監聽拖曳事件，計算選單狀態
@@ -66,7 +71,7 @@ export const useDragMenu = () => {
     };
 
     // 根據位置觸發的動作的選項內容
-    const handleDragEnd = () => {
+    const handleDragEnd = (e: DragEvent) => {
       //如果有觸發按鈕
       if (activeIndex !== -1) {
         const action = MENU_ITEMS[activeIndex];
@@ -88,6 +93,11 @@ export const useDragMenu = () => {
             type: "QUICK_SEARCH", // 暫時先用查詢，之後可以改 translate URL
             payload: `${selectedText} 中文翻譯`,
           });
+        } else if (action.id === "peek") {
+          // Peek：在頁面上彈出小視窗顯示查詢結果
+          setPeekQuery(selectedText);
+          setPeekPosition({ top: e.clientY, left: e.clientX });
+          setIsPeekVisible(true);
         }
       }
       setIsVisible(false);
@@ -108,5 +118,7 @@ export const useDragMenu = () => {
     };
   }, [isVisible, position, activeIndex, selectedText]);
 
-  return { isVisible, position, activeIndex };
+  const closePeek = () => setIsPeekVisible(false);
+
+  return { isVisible, position, activeIndex, isPeekVisible, peekPosition, peekQuery, closePeek };
 };
