@@ -57,3 +57,5 @@ https://www.bilibili.com/video/BV1gX4y177Kf?spm_id_from=333.788.videopod.section
 260410把選單改成扇形了,但是目前還看不太懂
 
 260411把svg選單原理大概搞懂,叫copilot幫我重構
+
+260413因為要做peek功能,所以安裝floating UI 幫我處理浮動視窗的顯示位置
