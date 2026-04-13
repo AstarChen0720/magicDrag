@@ -59,3 +59,4 @@ https://www.bilibili.com/video/BV1gX4y177Kf?spm_id_from=333.788.videopod.section
 260411把svg選單原理大概搞懂,叫copilot幫我重構
 
 260413因為要做peek功能,所以安裝floating UI 幫我處理浮動視窗的顯示位置
+決定了peek的核心理念就是要讓使用者大概了解這是什麼,而不是直接顯示google 搜尋結果,所以只會傳回簡單的ai結果或是wiki文字結果
