@@ -14,6 +14,8 @@ export const useDragMenu = () => {
   const [selectedText, setSelectedText] = useState("");
   // 哪個按鈕被選取了 (-1 代表沒選)
   const [activeIndex, setActiveIndex] = useState<number>(-1);
+  // Peek 視窗狀態
+  const [peekState, setPeekState] = useState({ isVisible: false, text: "", position: { top: 0, left: 0 } });
   // #endregion
 
   //主邏輯：監聽拖曳事件，計算選單狀態
@@ -88,6 +90,13 @@ export const useDragMenu = () => {
             type: "QUICK_SEARCH", // 暫時先用查詢，之後可以改 translate URL
             payload: `${selectedText} 中文翻譯`,
           });
+        } else if (action.id === "peek") {
+          // 快速預覽 (顯示 PeekWindow)
+          setPeekState({
+            isVisible: true,
+            text: selectedText,
+            position: { top: position.top, left: position.left },
+          });
         }
       }
       setIsVisible(false);
@@ -108,5 +117,8 @@ export const useDragMenu = () => {
     };
   }, [isVisible, position, activeIndex, selectedText]);
 
-  return { isVisible, position, activeIndex };
+  // 關閉 Peek 視窗的函式,要傳出去給 PeekWindow 使用
+  const closePeek = () => setPeekState((prev) => ({ ...prev, isVisible: false }));
+
+  return { isVisible, position, activeIndex, peekState, closePeek };
 };

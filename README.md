@@ -60,3 +60,9 @@ https://www.bilibili.com/video/BV1gX4y177Kf?spm_id_from=333.788.videopod.section
 
 260413因為要做peek功能,所以安裝floating UI 幫我處理浮動視窗的顯示位置
 決定了peek的核心理念就是要讓使用者大概了解這是什麼,而不是直接顯示google 搜尋結果,所以只會傳回簡單的ai結果或是wiki文字結果
+試了duckduckgo,wiki 的ai總結,都不能用,一個什麼都查不到,一個險制在wiki有的內容,沒有就掛
+
+260414將初步的peek功能讓ai幫我寫出來了,目前是調用Tavily API(就是有每月免費查詢1000次的ai摘要),效果不錯
+也看懂他是怎麼運作了,但是我應該要把這東西放到supabase或vercel做安全存取才對,但是要安全?等,所有功能都做出來再說,先這樣,我們可以移到下一個功能了
+
+

@@ -8,20 +8,30 @@ import { createRoot } from "react-dom/client";
 import { MENU_ITEMS } from "../../config/menuConfig";
 import { useDragMenu } from "../../hooks/useDragMenu";
 import { PieMenu } from "../../components/PieMenu";
+import { PeekWindow } from "../../components/PeekWindow";
 
 // --- 主程式：串接 Hook 與 UI ---
 const MagicDragApp = () => {
   //執行自訂 Hook，取得選單要有的狀態
-  const { isVisible, position, activeIndex } = useDragMenu();
+  const { isVisible, position, activeIndex, peekState, closePeek } = useDragMenu();
 
   //把狀態傳給 UI 元件，讓它根據狀態顯示選單(右邊的參數是傳給 UI 的 props)
   return (
-    <PieMenu
-      isVisible={isVisible}
-      position={position}
-      activeIndex={activeIndex}
-      menuItems={MENU_ITEMS}
-    />
+    <>
+      <PieMenu
+        isVisible={isVisible}
+        position={position}
+        activeIndex={activeIndex}
+        menuItems={MENU_ITEMS}
+      />
+      {peekState.isVisible && (
+        <PeekWindow
+          text={peekState.text}
+          position={peekState.position}
+          onClose={closePeek}
+        />
+      )}
+    </>
   );
 };
 
