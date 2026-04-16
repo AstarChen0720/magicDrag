@@ -29,6 +29,7 @@ const MagicDragApp = () => {
           text={peekState.text}
           position={peekState.position}
           onClose={closePeek}
+          mode={peekState.mode}
         />
       )}
     </>

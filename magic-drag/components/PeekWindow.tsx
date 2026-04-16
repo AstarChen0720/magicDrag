@@ -6,9 +6,10 @@ interface PeekWindowProps {
   text: string;
   position: { top: number; left: number };
   onClose: () => void;
+  mode?: "summary" | "display" | "translate";
 }
 
-export const PeekWindow = ({ text, position, onClose }: PeekWindowProps) => {
+export const PeekWindow = ({ text, position, onClose, mode = "summary" }: PeekWindowProps) => {
   //會用到的狀態:
   //查詢時顯示的文字
   const [summary, setSummary] = useState<string>("正在為您查詢中...");
@@ -42,9 +43,17 @@ export const PeekWindow = ({ text, position, onClose }: PeekWindowProps) => {
     refs.setReference(virtualReference.current);
   }, [position, refs]);
 
-  // 使用 Tavily API 獲取總結
+  // 使用 Tavily API 獲取總結 或 直接顯示傳入的文字
   useEffect(() => {
     let isMounted = true;
+    
+    // 如果不是 summary 模式，我們就直接把想顯示的 text 設定給 summary 狀態，不去呼叫 API
+    if (mode === "display" || mode === "translate") {
+      setSummary(text);
+      setError(false);
+      return;
+    }
+
     setSummary("正在為您總結中...");
     setError(false);
 
@@ -111,6 +120,19 @@ export const PeekWindow = ({ text, position, onClose }: PeekWindowProps) => {
     };
   }, [refs.floating, onClose]);
 
+  // 取得相對應的標題
+  const getTitle = () => {
+    switch (mode) {
+      case "translate":
+        return "翻譯結果";
+      case "display":
+        return "快速預覽";
+      case "summary":
+      default:
+        return "AI 快速預覽";
+    }
+  };
+
   //UI
   return (
     <div
@@ -122,7 +144,7 @@ export const PeekWindow = ({ text, position, onClose }: PeekWindowProps) => {
       className="bg-white rounded-lg shadow-xl border border-gray-200 p-4 max-w-sm w-80 text-gray-800 pointer-events-auto"
     >
       <div className="flex items-center justify-between mb-2">
-        <h3 className="font-bold text-sm text-blue-600">AI 快速預覽</h3>
+        <h3 className="font-bold text-sm text-blue-600">{getTitle()}</h3>
         <button
           onClick={onClose}
           className="text-gray-400 hover:text-gray-600 w-5 h-5 flex items-center justify-center rounded-full hover:bg-gray-100"

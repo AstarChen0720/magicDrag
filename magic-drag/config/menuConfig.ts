@@ -31,7 +31,7 @@ export const MENU_ITEMS: MenuItems[] = [
   },
   {
     id: "translate",
-    label: "翻譯",
+    label: "快速翻譯",
     color: "bg-purple-500",
     activeColor: "bg-purple-700",
   },

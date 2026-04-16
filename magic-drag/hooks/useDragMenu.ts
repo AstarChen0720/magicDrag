@@ -15,7 +15,17 @@ export const useDragMenu = () => {
   // 哪個按鈕被選取了 (-1 代表沒選)
   const [activeIndex, setActiveIndex] = useState<number>(-1);
   // Peek 視窗狀態
-  const [peekState, setPeekState] = useState({ isVisible: false, text: "", position: { top: 0, left: 0 } });
+  const [peekState, setPeekState] = useState<{
+    isVisible: boolean;
+    text: string;
+    position: { top: number; left: number };
+    mode?: "summary" | "display" | "translate";
+  }>({
+    isVisible: false,
+    text: "",
+    position: { top: 0, left: 0 },
+    mode: "summary",
+  });
   // #endregion
 
   //主邏輯：監聽拖曳事件，計算選單狀態
@@ -68,35 +78,82 @@ export const useDragMenu = () => {
     };
 
     // 根據位置觸發的動作的選項內容
-    const handleDragEnd = () => {
+    const handleDragEnd = async () => {
       //如果有觸發按鈕
       if (activeIndex !== -1) {
         const action = MENU_ITEMS[activeIndex];
 
         // 💡 執行動作：
-        // 查尋
-        if (action.id === "search") {
-          browser.runtime.sendMessage({
-            type: "QUICK_SEARCH",
-            payload: selectedText,
-          });
-        } else if (action.id === "copy") {
-          // 複製文字
-          navigator.clipboard.writeText(selectedText);
-          console.log("📋 文字已複製到剪貼簿");
-        } else if (action.id === "translate") {
-          // 翻譯
-          browser.runtime.sendMessage({
-            type: "QUICK_SEARCH", // 暫時先用查詢，之後可以改 translate URL
-            payload: `${selectedText} 中文翻譯`,
-          });
-        } else if (action.id === "peek") {
-          // 快速預覽 (顯示 PeekWindow)
-          setPeekState({
-            isVisible: true,
-            text: selectedText,
-            position: { top: position.top, left: position.left },
-          });
+        switch (action.id) {
+          case "search":
+            browser.runtime.sendMessage({
+              type: "QUICK_SEARCH",
+              payload: selectedText,
+            });
+            break;
+
+          case "copy":
+            // 複製文字
+            navigator.clipboard.writeText(selectedText);
+            console.log("📋 文字已複製到剪貼簿");
+            break;
+
+          case "translate":
+            // 翻譯：先顯示 Loading 狀態的 PeekWindow
+            setPeekState({
+              isVisible: true,
+              text: "翻譯中...",
+              position: { top: position.top, left: position.left },
+              mode: "translate",
+            });
+
+            // 傳送給後端(Background)進行翻譯
+            try {
+              const response = await browser.runtime.sendMessage({
+                type: "TRANSLATE",
+                payload: selectedText,
+              });
+
+              if (response && response.translatedText) {
+                // 將翻譯結果更新到 PeekWindow 上
+                setPeekState({
+                  isVisible: true,
+                  text: response.translatedText,
+                  position: { top: position.top, left: position.left },
+                  mode: "translate",
+                });
+              } else {
+                setPeekState({
+                  isVisible: true,
+                  text: "翻譯失敗",
+                  position: { top: position.top, left: position.left },
+                  mode: "translate",
+                });
+              }
+            } catch (err) {
+              console.error("發送翻譯請求失敗:", err);
+              setPeekState({
+                isVisible: true,
+                text: "發生錯誤: 翻譯請求失敗",
+                position: { top: position.top, left: position.left },
+                mode: "translate",
+              });
+            }
+            break;
+
+          case "peek":
+            // 快速預覽 (顯示 PeekWindow)，預設使用 summary 模式 (Tavily API)
+            setPeekState({
+              isVisible: true,
+              text: selectedText,
+              position: { top: position.top, left: position.left },
+              mode: "summary",
+            });
+            break;
+
+          default:
+            console.log("未知的操作:", action.id);
+            break;
         }
       }
       setIsVisible(false);
@@ -118,7 +175,8 @@ export const useDragMenu = () => {
   }, [isVisible, position, activeIndex, selectedText]);
 
   // 關閉 Peek 視窗的函式,要傳出去給 PeekWindow 使用
-  const closePeek = () => setPeekState((prev) => ({ ...prev, isVisible: false }));
+  const closePeek = () =>
+    setPeekState((prev) => ({ ...prev, isVisible: false }));
 
   return { isVisible, position, activeIndex, peekState, closePeek };
 };
