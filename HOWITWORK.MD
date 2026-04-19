@@ -71,3 +71,25 @@ peek視窗的運作
 3. **背景通訊 (請求翻譯)**：同時，利用 `browser.runtime.sendMessage` 將選取的文字寄給 Background Script (背景腳本)，請求型別為 `"TRANSLATE"`。
 4. **外部 API 調用 (Google API)**：`background/index.ts` 收到請求，呼叫我們抽離出來的 `utils/translate.ts` 工具，這隻工具會透過 `fetch` 打 Google Translate Web API (gtx) 取得中文翻譯。
 5. **回傳與更新層 (顯示結果)**：API 吐回結果後，Background Script 將結果回傳給 Content Script。`useDragMenu` 收到後，再次呼叫 `setPeekState`，只不過這次把 `text` 替換成真正的「翻譯結果」。因為 React 的響應式特性，畫面上的「翻譯中...」就會瞬間被置換成中文！
+
+### 設定選單順序和開關項目的運作流程
+
+你的理解非常正確！這整個「動態設定與即時同步」的過程可以拆解成以下四個層次：
+
+1. **資料定義與儲存層 (`utils/storage.ts`)**
+   - **核心概念**：不再寫死選單，而是建立一個名為 `activeMenuIds` 的陣列（例如 `["copy", "search"]`），並交由 WXT 的 Storage API 管理。
+   - **意義**：這個陣列的「元素內容」決定要顯示哪些功能，「元素順序」決定了切片在圓盤上的排列位置。
+
+2. **UI 互動與操作層 (`entrypoints/popup/App.tsx`)**
+   - 在瀏覽器右上角的 Popup 設定頁面中渲染這個清單。
+   - **開關功能**：利用陣列方法（如 `filter` 移除 ID、`push` 加入 ID）來剔除或新增選項。
+   - **排序功能**：利用陣列元素的互相交換（`[a, b] = [b, a]`）來改變選項的先後排位。
+   - **寫入資料**：操作完畢後，呼叫 `setValue()` 將這份最新的 ID 名單存回瀏覽器的本地資料庫。
+
+3. **跨環境通訊與同步層 (WXT Storage Watch)**
+   - 擴充功能的 Popup 和注入在網頁裡的 Content Script 是**完全隔離的兩個環境**。
+   - 透過 WXT 提供的 `menuSettingsStorage.watch()` 機制，Content Script 會自動監聽資料庫。只要 Popup 一修改並儲存了新陣列，網頁端就會**在毫秒間自動收到通知**並抓取新設定，省去我們自己寫複雜訊息傳遞（sendMessage）的麻煩。
+
+4. **重新計算與動態渲染層 (`hooks/useDragMenu.ts`)**
+   - `useDragMenu` 收到新的 `activeMenuIds` 後，立刻利用 `useMemo` 把 ID 映射回完整的選單物件 (`activeMenuItems`)。
+   - **動態適應的關鍵**：因為數學計算公式寫的是 `360 / activeMenuItems.length`，所以當選項從 4 個變 3 個時，程式會自動把切片從 90度 變成 120度。只要陣列一變化，整個圓盤選單的大小、位置、對應功能就會自動完美重繪！

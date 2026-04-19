@@ -58,6 +58,7 @@ https://www.bilibili.com/video/BV1gX4y177Kf?spm_id_from=333.788.videopod.section
 
 260411把svg選單原理大概搞懂,叫copilot幫我重構
 
+<sprint結束開始>
 260413因為要做peek功能,所以安裝floating UI 幫我處理浮動視窗的顯示位置
 決定了peek的核心理念就是要讓使用者大概了解這是什麼,而不是直接顯示google 搜尋結果,所以只會傳回簡單的ai結果或是wiki文字結果
 試了duckduckgo,wiki 的ai總結,都不能用,一個什麼都查不到,一個險制在wiki有的內容,沒有就掛
@@ -70,4 +71,9 @@ https://www.bilibili.com/video/BV1gX4y177Kf?spm_id_from=333.788.videopod.section
 讓ai幫我寫出快速翻譯的功能了,調用google translate API 自動偵測語言翻譯成繁體中文,然後用跟peek一樣的popup顯示，效果很不錯,速度很快,且他不用key,直接請求就好
 也看懂是如何運作的了,可以下一個功能了
 
+260419已完成可以設定要出現的選項跟順序功能,目前是用popup作為設定的選單,可以勾選項目(預設全顯示)來決定要顯示什麼選項,可以用上下箭頭來決定順序
+未來可以改用更直觀的設定介面,例如也是用拖曳的方法開啟選單,但目前這樣可以
+懂這東西如何運作了
 
+這個sprint就到這裡等等來檢討
+<sprint結束>

@@ -1,8 +1,8 @@
-//其實可以直接這樣放 entrypoints/content.tsx
-//但是我創一個資料夾以後他如果有其他檔案比較不會亂掉，如果放在資料夾下面，他只會讀叫做 index 的檔案
-//他要求你要把所有內容都放在 defineContentScript 裡面，當作component 來讀
+﻿//?嗅祕?臭誑?湔?見??entrypoints/content.tsx
+//雿?銝???冗隞亙?隞????嗡?瑼?瘥?銝?鈭?嚗???刻??冗銝嚗??芣?霈?怠? index ??獢?
+//隞?瘙?閬???摰寥?曉 defineContentScript 鋆⊿嚗雿omponent 靘?
 
-// "@/"意思是專案根目錄:告訴主任,從專案的大門口 (根目錄) 出發，進入 assets 找 main.css
+// "@/"?撠??寧???迄銝颱遙,敺?獢?憭折???(?寧?? ?箇嚗脣 assets ??main.css
 import "@/assets/main.css";
 import { createRoot } from "react-dom/client";
 import { MENU_ITEMS } from "../../config/menuConfig";
@@ -10,19 +10,19 @@ import { useDragMenu } from "../../hooks/useDragMenu";
 import { PieMenu } from "../../components/PieMenu";
 import { PeekWindow } from "../../components/PeekWindow";
 
-// --- 主程式：串接 Hook 與 UI ---
+// --- 銝餌?撘?銝脫 Hook ??UI ---
 const MagicDragApp = () => {
-  //執行自訂 Hook，取得選單要有的狀態
-  const { isVisible, position, activeIndex, peekState, closePeek } = useDragMenu();
+  //?瑁??芾? Hook嚗?敺?株??????
+  const { isVisible, position, activeIndex, peekState, closePeek, activeMenuItems } = useDragMenu();
 
-  //把狀態傳給 UI 元件，讓它根據狀態顯示選單(右邊的參數是傳給 UI 的 props)
+  //???蝯?UI ?辣嚗?摰???＊蝷粹???喲????豢?喟策 UI ??props)
   return (
     <>
       <PieMenu
         isVisible={isVisible}
         position={position}
         activeIndex={activeIndex}
-        menuItems={MENU_ITEMS}
+        menuItems={activeMenuItems}
       />
       {peekState.isVisible && (
         <PeekWindow
@@ -36,7 +36,7 @@ const MagicDragApp = () => {
   );
 };
 
-// --- WXT插件自動渲染 ---
+// --- WXT?辣?芸?皜脫? ---
 export default defineContentScript({
   matches: ["<all_urls>"],
   cssInjectionMode: "ui",
